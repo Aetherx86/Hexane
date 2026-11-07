@@ -1,0 +1,16 @@
+target/
+**/target/
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+.zig-cache/
+**/.zig-cache/
+zig-out/
+**/zig-out/
+*.o
+*.s
+*.bin
+telemetry_engine/query_carbon/carbon_analytics
+# cogit
+/.cogit/

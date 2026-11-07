@@ -1,0 +1,84 @@
+# Copyright (c) 2026 jk9576 (Sushi Kim / Jeong Hoon Kim). All rights reserved.
+# GitLab CI/CD Pipeline for Hexene Toolchain & Telemetry Engine
+
+stages:
+  - test
+  - integration
+
+default:
+  interruptible: true
+
+variables:
+  CARGO_TERM_COLOR: always
+  DEBIAN_FRONTEND: noninteractive
+
+test:compiler:
+  stage: test
+  image: rust:1.85-bookworm
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq clang build-essential
+  script:
+    - rustc --version
+    - cargo test
+    - cargo test --test queen_full_suite_tests
+
+test:ingestion-rust:
+  stage: test
+  image: rust:1.85-bookworm
+  script:
+    - cd telemetry_engine/ingestion_rust
+    - cargo test
+    - cargo build --release
+
+test:daemon-zig:
+  stage: test
+  image: ubuntu:22.04
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq curl xz-utils
+    - curl -sSL https://ziglang.org/download/0.17.1/zig-x86_64-linux-0.17.1.tar.xz | tar -xJ -C /opt
+    - export PATH="/opt/zig-x86_64-linux-0.17.1:$PATH"
+  script:
+    - export PATH="/opt/zig-x86_64-linux-0.17.1:$PATH"
+    - zig version
+    - cd telemetry_engine/daemon_zig
+    - zig build test
+    - zig build -Doptimize=ReleaseFast
+
+test:dashboard-web:
+  stage: test
+  image: node:20-bookworm
+  script:
+    - cd telemetry_engine/dashboard_web
+    - npm ci
+    - npm test
+    - npm run build
+
+test:query-carbon:
+  stage: test
+  image: rust:1.85-bookworm
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq clang build-essential
+  script:
+    - ./telemetry_engine/query_carbon/tests/test_analytics.sh
+
+e2e:integration:
+  stage: integration
+  image: ubuntu:22.04
+  needs:
+    - test:compiler
+    - test:ingestion-rust
+    - test:daemon-zig
+    - test:dashboard-web
+    - test:query-carbon
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq curl xz-utils build-essential clang
+    - curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+    - apt-get install -y -qq nodejs
+    - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    - source "$HOME/.cargo/env"
+    - curl -sSL https://ziglang.org/download/0.17.1/zig-x86_64-linux-0.17.1.tar.xz | tar -xJ -C /opt
+    - export PATH="/opt/zig-x86_64-linux-0.17.1:$HOME/.cargo/bin:$PATH"
+  script:
+    - source "$HOME/.cargo/env" 2>/dev/null || true
+    - export PATH="/opt/zig-x86_64-linux-0.17.1:$HOME/.cargo/bin:$PATH"
+    - ./eval_submission.sh

@@ -1,0 +1,24 @@
+[package]
+name = "telemetry-ingestion"
+version = "0.1.0"
+edition = "2024"
+authors = ["jk9576 <jk9576@hanyang.ac.kr>"]
+description = "High-performance distributed log analytics and telemetry ingestion engine in Rust"
+license = "MIT"
+
+[lib]
+name = "telemetry_ingestion"
+path = "src/lib.rs"
+
+[[bin]]
+name = "telemetry-ingestion"
+path = "src/main.rs"
+
+[dependencies]
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true

@@ -1,0 +1,135 @@
+# Copyright (c) 2026 jk9576 (Sushi Kim / Jeong Hoon Kim). All rights reserved.
+# GitHub Actions CI/CD Pipeline for Hexene Toolchain & Telemetry Engine
+
+name: CI Pipeline
+
+on:
+  push:
+    tags:
+      - "v*.0.0"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  compiler:
+    name: Compiler & Polyglot Suites (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5bef02748146f7 # stable
+
+      - name: Install Clang & Host Build Tools (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential clang
+
+      - name: Verify Toolchain Versions
+        run: |
+          rustc --version
+          cargo --version
+          clang --version
+
+      - name: Run Core Compiler Test Suites
+        run: cargo test
+
+      - name: Run N-Queens Polyglot Verification Suite
+        run: cargo test --test queen_full_suite_tests
+
+  ingestion-rust:
+    name: Rust Telemetry Ingestion Engine
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5bef02748146f7 # stable
+
+      - name: Run Ingestion Unit Tests & Benchmarks
+        run: |
+          cd telemetry_engine/ingestion_rust
+          cargo test
+          cargo build --release
+
+  daemon-zig:
+    name: Zig Telemetry Daemon Agent
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install Zig 0.17.1
+        run: |
+          curl -fsSL https://ziglang.org/download/0.17.1/zig-x86_64-linux-0.17.1.tar.xz | tar -xJ -C /tmp
+          sudo ln -sf /tmp/zig-x86_64-linux-0.17.1/zig /usr/local/bin/zig
+
+      - name: Verify Zig Version
+        run: zig version
+
+      - name: Run Daemon Tests & Build Release
+        run: |
+          cd telemetry_engine/daemon_zig
+          zig build test
+          zig build -Doptimize=ReleaseFast
+
+  dashboard-web:
+    name: Next.js & TypeScript Observability Dashboard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies, Test, and Build
+        run: |
+          cd telemetry_engine/dashboard_web
+          npm ci
+          npm test
+          npm run build
+
+  e2e-integration:
+    name: 4-Tier End-to-End Distributed Pipeline
+    needs: [compiler, ingestion-rust, daemon-zig, dashboard-web]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@631a55b12751854ce901bb631d5bef02748146f7 # stable
+
+      - name: Install Clang & Build Tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential clang
+
+      - name: Install Zig 0.17.1
+        run: |
+          curl -fsSL https://ziglang.org/download/0.17.1/zig-x86_64-linux-0.17.1.tar.xz | tar -xJ -C /tmp
+          sudo ln -sf /tmp/zig-x86_64-linux-0.17.1/zig /usr/local/bin/zig
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+
+      - name: Execute Academic Submission Evaluation
+        run: ./eval_submission.sh

@@ -1,0 +1,65 @@
+# Copyright (c) 2026 jk9576 (Sushi Kim / Jeong Hoon Kim). All rights reserved.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: telemetry-daemon
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: telemetry-daemon
+    app.kubernetes.io/part-of: telemetry-platform
+spec:
+  selector:
+    matchLabels:
+      name: telemetry-daemon
+  template:
+    metadata:
+      labels:
+        name: telemetry-daemon
+    spec:
+      hostPID: true
+      hostNetwork: true
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: telemetry-agent
+          image: telemetry-agent:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--host"
+            - "telemetry-ingestion.monitoring.svc.cluster.local"
+            - "--port"
+            - "8080"
+            - "--interval-ms"
+            - "500"
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "8Mi"
+            limits:
+              cpu: "50m"
+              memory: "16Mi"
+          securityContext:
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: varlog
+              mountPath: /var/log
+              readOnly: true
+            - name: procfs
+              mountPath: /proc
+              readOnly: true
+      volumes:
+        - name: varlog
+          hostPath:
+            path: /var/log
+        - name: procfs
+          hostPath:
+            path: /proc

@@ -1,0 +1,233 @@
+// Copyright (c) 2026 jk9576. All rights reserved.
+// Hexane Language Toolchain
+// Licensed under the MIT License.
+
+use crate::diagnostics::Span;
+use std::fmt;
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum TokenKind {
+    // Keywords
+    Fn,
+    Var,
+    Let,
+    Returned,
+    Return,
+    If,
+    Else,
+    While,
+    For,
+    In,
+    Break,
+    Continue,
+    Class,
+    Struct,
+    Impl,
+    As,
+    Interface,
+    Package,
+    Library,
+    Import,
+    Api,
+    Ref,
+    SelfKw,
+    Extern,
+
+    // Types
+    I8,
+    I16,
+    I32,
+    I64,
+    U8,
+    U16,
+    U32,
+    U64,
+    Int,
+    F32,
+    F64,
+    Float,
+    BoolType,
+    StringType,
+    StringViewType,
+    Auto,
+    Void,
+    Array,
+
+    // Literals
+    Integer(i64),
+    FloatLit(f64),
+    StringLit(String),
+    BoolLit(bool),
+
+    // Identifiers
+    Ident(String),
+
+    // Operators & Delimiters
+    Plus,
+    Minus,
+    Star,
+    Slash,
+    Percent,
+    PlusPlus,
+    MinusMinus,
+
+    Eq,
+    PlusEq,
+    MinusEq,
+    StarEq,
+    SlashEq,
+    PercentEq,
+    AmpEq,
+    PipeEq,
+    CaretEq,
+    ShlEq,
+    ShrEq,
+
+    EqEq,
+    NotEq,
+    Lt,
+    LtEq,
+    Gt,
+    GtEq,
+
+    AndAnd,
+    OrOr,
+    Bang,
+
+    Amp,
+    Pipe,
+    Caret,
+    Tilde,
+    Shl,
+    Shr,
+
+    Arrow,    // ->
+    FatArrow, // =>
+    Dot,
+    Colon,
+    ColonColon,
+    Semicolon,
+    Comma,
+
+    LParen,
+    RParen,
+    LBrace,
+    RBrace,
+    LBracket,
+    RBracket,
+
+    Eof,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Token {
+    pub kind: TokenKind,
+    pub span: Span,
+}
+
+impl Token {
+    pub fn new(kind: TokenKind, span: Span) -> Self {
+        Self { kind, span }
+    }
+}
+
+impl fmt::Display for TokenKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TokenKind::Fn => write!(f, "fn"),
+            TokenKind::Var => write!(f, "var"),
+            TokenKind::Let => write!(f, "let"),
+            TokenKind::Returned => write!(f, "returned"),
+            TokenKind::Return => write!(f, "return"),
+            TokenKind::If => write!(f, "if"),
+            TokenKind::Else => write!(f, "else"),
+            TokenKind::While => write!(f, "while"),
+            TokenKind::For => write!(f, "for"),
+            TokenKind::In => write!(f, "in"),
+            TokenKind::Break => write!(f, "break"),
+            TokenKind::Continue => write!(f, "continue"),
+            TokenKind::Class => write!(f, "class"),
+            TokenKind::Struct => write!(f, "struct"),
+            TokenKind::Impl => write!(f, "impl"),
+            TokenKind::As => write!(f, "as"),
+            TokenKind::Interface => write!(f, "interface"),
+            TokenKind::Package => write!(f, "package"),
+            TokenKind::Library => write!(f, "library"),
+            TokenKind::Import => write!(f, "import"),
+            TokenKind::Api => write!(f, "api"),
+            TokenKind::Ref => write!(f, "ref"),
+            TokenKind::SelfKw => write!(f, "self"),
+            TokenKind::Extern => write!(f, "extern"),
+            TokenKind::I8 => write!(f, "i8"),
+            TokenKind::I16 => write!(f, "i16"),
+            TokenKind::I32 => write!(f, "i32"),
+            TokenKind::I64 => write!(f, "i64"),
+            TokenKind::U8 => write!(f, "u8"),
+            TokenKind::U16 => write!(f, "u16"),
+            TokenKind::U32 => write!(f, "u32"),
+            TokenKind::U64 => write!(f, "u64"),
+            TokenKind::Int => write!(f, "int"),
+            TokenKind::F32 => write!(f, "f32"),
+            TokenKind::F64 => write!(f, "f64"),
+            TokenKind::Float => write!(f, "float"),
+            TokenKind::BoolType => write!(f, "bool"),
+            TokenKind::StringType => write!(f, "String"),
+            TokenKind::StringViewType => write!(f, "StringView"),
+            TokenKind::Auto => write!(f, "auto"),
+            TokenKind::Void => write!(f, "void"),
+            TokenKind::Array => write!(f, "array"),
+            TokenKind::Integer(v) => write!(f, "{}", v),
+            TokenKind::FloatLit(v) => write!(f, "{}", v),
+            TokenKind::StringLit(s) => write!(f, "\"{}\"", s),
+            TokenKind::BoolLit(b) => write!(f, "{}", b),
+            TokenKind::Ident(id) => write!(f, "{}", id),
+            TokenKind::Plus => write!(f, "+"),
+            TokenKind::Minus => write!(f, "-"),
+            TokenKind::Star => write!(f, "*"),
+            TokenKind::Slash => write!(f, "/"),
+            TokenKind::Percent => write!(f, "%"),
+            TokenKind::PlusPlus => write!(f, "++"),
+            TokenKind::MinusMinus => write!(f, "--"),
+            TokenKind::Eq => write!(f, "="),
+            TokenKind::PlusEq => write!(f, "+="),
+            TokenKind::MinusEq => write!(f, "-="),
+            TokenKind::StarEq => write!(f, "*="),
+            TokenKind::SlashEq => write!(f, "/="),
+            TokenKind::PercentEq => write!(f, "%="),
+            TokenKind::AmpEq => write!(f, "&="),
+            TokenKind::PipeEq => write!(f, "|="),
+            TokenKind::CaretEq => write!(f, "^="),
+            TokenKind::ShlEq => write!(f, "<<="),
+            TokenKind::ShrEq => write!(f, ">>="),
+            TokenKind::EqEq => write!(f, "=="),
+            TokenKind::NotEq => write!(f, "!="),
+            TokenKind::Lt => write!(f, "<"),
+            TokenKind::LtEq => write!(f, "<="),
+            TokenKind::Gt => write!(f, ">"),
+            TokenKind::GtEq => write!(f, ">="),
+            TokenKind::AndAnd => write!(f, "&&"),
+            TokenKind::OrOr => write!(f, "||"),
+            TokenKind::Bang => write!(f, "!"),
+            TokenKind::Amp => write!(f, "&"),
+            TokenKind::Pipe => write!(f, "|"),
+            TokenKind::Caret => write!(f, "^"),
+            TokenKind::Tilde => write!(f, "~"),
+            TokenKind::Shl => write!(f, "<<"),
+            TokenKind::Shr => write!(f, ">>"),
+            TokenKind::Arrow => write!(f, "->"),
+            TokenKind::FatArrow => write!(f, "=>"),
+            TokenKind::Dot => write!(f, "."),
+            TokenKind::Colon => write!(f, ":"),
+            TokenKind::ColonColon => write!(f, "::"),
+            TokenKind::Semicolon => write!(f, ";"),
+            TokenKind::Comma => write!(f, ","),
+            TokenKind::LParen => write!(f, "("),
+            TokenKind::RParen => write!(f, ")"),
+            TokenKind::LBrace => write!(f, "{{"),
+            TokenKind::RBrace => write!(f, "}}"),
+            TokenKind::LBracket => write!(f, "["),
+            TokenKind::RBracket => write!(f, "]"),
+            TokenKind::Eof => write!(f, "<EOF>"),
+        }
+    }
+}

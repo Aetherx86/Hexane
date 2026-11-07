@@ -1,0 +1,37 @@
+[package]
+name = "carbonation"
+version = "0.1.0"
+edition = "2024"
+authors = ["jk9576 <jk9576@hanyang.ac.kr>"]
+description = "Carbonation: High-efficiency, memory-safe compiler, interpreter, assembler, and translator for Carbon language"
+license = "MIT"
+
+[lib]
+name = "carbonation"
+path = "src/lib.rs"
+
+[[bin]]
+name = "carbonation"
+path = "src/bin/carbonation.rs"
+
+[[bin]]
+name = "graphene"
+path = "src/bin/graphene.rs"
+
+[[bin]]
+name = "hexane"
+path = "src/bin/hexane.rs"
+
+[[bin]]
+name = "hexene"
+path = "src/bin/hexene.rs"
+
+[dependencies]
+ed25519-compact = "2.1"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
